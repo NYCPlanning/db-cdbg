@@ -49,7 +49,7 @@ def quick_clean(address):
     # Join results as a single string, replacing punctuation with spaces
     return re.sub(r'[,\%\$\#\@\!\_\.\?\`\"\(\)\ï\¿\½\’]', '', ' '.join(result))
 
-def get_sname(b5sc): 
+def b5sc_to_sname(b5sc):
     try:
         geo = g['D'](B5SC=b5sc)
         return geo.get('First Street Name Normalized', '')
@@ -63,7 +63,7 @@ def get_address(bbl):
         filter_addresses = [d for d in addresses if d['Low House Number'] != '' and d['5-Digit Street Code'] != '']
         address = filter_addresses[0]
         b5sc = address.get('Borough Code', '0')+address.get('5-Digit Street Code', '00000')
-        sname = get_sname(b5sc)
+        sname = b5sc_to_sname(b5sc)
         hnum = address.get('Low House Number', '')
         return dict(sname=sname, hnum=hnum)
     except:

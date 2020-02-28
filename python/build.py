@@ -6,10 +6,10 @@ from utils import get_hnum, get_sname, geocode_address, geocode_bbl
 from multiprocessing import Pool, cpu_count
 
 # Load data
-file_path = f'{Path(__file__).parent.parent}/data/Merged Text File for 2018.xlsx'
+file_path = f'{Path(__file__).parent.parent}/data/Merged Text File for 2019.xlsx'
 A = pd.read_excel(file_path, sheet_name='Type A file', skiprows=3, dtype=str)
 B = pd.read_excel(file_path, sheet_name='Type B File', skiprows=3, dtype=str)
-project_code = pd.read_excel(file_path, sheet_name='Project Codes', skiprows=2)
+# project_code = pd.read_excel(file_path, sheet_name='Project Codes')
 
 # Change column names from e.g. Borough Code tp borough_code
 def format_colnames(df):
@@ -20,7 +20,7 @@ def format_colnames(df):
 
 A = format_colnames(A)
 B = format_colnames(B)
-project_code = format_colnames(project_code)
+# project_code = format_colnames(project_code)
 
 # Remove nan
 A=A.dropna(axis=0, how='all')
@@ -35,6 +35,7 @@ B.tax_lot = B.tax_lot.astype(int).astype(str)
 # Parse address
 A['hnum'] = A['address'].apply(get_hnum)
 A['sname'] = A['address'].apply(get_sname)
+A['project_id'] = A['project_name']
 A['boro'] = A['borough_code']
 
 # # Create unique identifier
@@ -48,7 +49,7 @@ B['uid'] = B['bbl'].astype(str)
 
 A.to_csv(f'{Path(__file__).parent.parent}/output/A.csv', index = False)
 B.to_csv(f'{Path(__file__).parent.parent}/output/B.csv', index = False)
-project_code.to_csv(f'{Path(__file__).parent.parent}/output/project_code.csv', index = False)
+# project_code.to_csv(f'{Path(__file__).parent.parent}/output/project_code.csv', index = False)
 
 A = pd.read_csv(f'{Path(__file__).parent.parent}/output/A.csv', dtype=str)
 B = pd.read_csv(f'{Path(__file__).parent.parent}/output/B.csv', dtype=str)

@@ -6,6 +6,8 @@ A = pd.read_csv(f'{Path(__file__).parent.parent}/output/A_geo.csv', index_col=Fa
 B = pd.read_csv(f'{Path(__file__).parent.parent}/output/B_geo.csv', index_col=False, dtype=str)
 project_code = pd.read_csv(f'{Path(__file__).parent.parent}/output/project_code.csv', index_col=False, dtype=str)
 
+A['project_id'] = A['project_name']
+project_code.columns = ['project_code', 'program_name']
 A.project_id = A.project_id.apply(lambda x: x.strip())
 B.project_id = B.project_id.apply(lambda x: x.strip())
 A.drop_duplicates(keep='first', inplace=True)
@@ -15,11 +17,20 @@ print(f'A.shape: {A.shape}, B.shape: {B.shape}')
 
 project_code.project_code = project_code.project_code.apply(lambda x: x.strip())
 df = pd.concat([A,B], sort=False)
-df = df.merge(project_code[['program_name', 'project_code']], how='left', left_on='project_id', right_on='project_code')
+
+df['join_key'] = df['project_id']\
+                        .apply(lambda x: 'Targeted Code Enforcement'
+                                        if 'Targeted Code Enforcement' in x else x)
+project_code['join_key'] = project_code['program_name']\
+                        .apply(lambda x: 'Targeted Code Enforcement'
+                                        if 'Targeted Code Enforcement' in x else x)
+df = df.merge(project_code[['program_name', 'project_code', 'join_key']],
+                         how='left', left_on='join_key', right_on='join_key')
+
 df.fillna('', inplace=True)
 df['boroct'] = list(map(lambda boro, ct: boro+ct if ct!='' else '', df.boro, df.geo_censtract))
-col_names = {'project_id': 'PROJCODE', 
-             'units':'UNIT SUM', 
+col_names = {'project_id': 'PROJCODE',
+             'units':'UNIT SUM',
              'input_type_code':'CODE',
              'boro':'BORO',
              'address': 'ADDRESS',
@@ -46,4 +57,4 @@ col_names = {'project_id': 'PROJCODE',
 
 df = df.rename(columns=col_names)
 df = df[list(col_names.values())]
-df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2019_half_done.csv', index=False)
+df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index=False)
