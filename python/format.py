@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from sqlalchemy import create_engine
+import os
 
 A = pd.read_csv(f'{Path(__file__).parent.parent}/output/A_geo.csv', index_col=False, dtype=str)
 B = pd.read_csv(f'{Path(__file__).parent.parent}/output/B_geo.csv', index_col=False, dtype=str)
@@ -58,3 +60,27 @@ col_names = {'project_id': 'PROJCODE',
 df = df.rename(columns=col_names)
 df = df[list(col_names.values())]
 df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index=False)
+
+## Backfilling using pluto
+df = pd.read_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index_col=False, dtype=str)
+def get_boroct(bbl):
+    con = create_engine(os.environ.get('EDM_DATA', ''))
+    r = con.execute(f'''
+            select borocode||lpad(split_part(ct2010,'.',1), 4,'0')||rpad(split_part(ct2010,'.',2),2,'0')
+            from dcp_pluto."20v2" where bbl = \'{bbl}\'
+        ''').fetchall()
+    if len(r) == 0:
+        return np.nan
+    else:
+        result = r[0][0]
+        return result
+
+df.loc[(df['BORO CT'].isna())&(~df.BBL.isna()), 'BORO CT'] = df.loc[(df['BORO CT'].isna())&(~df.BBL.isna()), 'BBL'].apply(get_boroct)
+df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index=False)
+
+## Adding eligibility field
+df = pd.read_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index_col=False, dtype=str)
+eligibility = pd.read_csv(f'{Path(__file__).parent.parent}/data/CDBG_census_tract.csv', index_col=False, dtype=str)
+df = df.merge(eligibility[['BoroCT', 'Eligibility']], how='left', left_on='BORO CT', right_on='BoroCT')
+df = df.drop(columns=['BoroCT'],  axis=1)
+df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020_FINAL.csv', index=False)
