@@ -2,6 +2,7 @@
 docker run -it --rm\
             -v `pwd`:/src\
             -w /src\
+            --env-file .env\
             sptkl/docker-geosupport:20.1.0 bash -c '
                         pip install -r requirements.txt; 
                         python3 python/build.py; 

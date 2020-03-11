@@ -7,7 +7,7 @@ B = pd.read_csv(f'{Path(__file__).parent.parent}/output/B_failure.csv', dtype=st
 A['project_id'] = A['project_name']
 df = pd.concat([A,B], sort=False)
 
-df = df[['uid', 'project_id', 'input_type_code','geo_grc', 'geo_grc2', 'bbl', 'hnum', 'sname','boro']]
+df = df[['uid', 'project_id', 'input_type_code','geo_grc', 'geo_grc2', 'geo_message', 'geo_reason_code', 'bbl', 'hnum', 'sname','boro']]
 df['omb_bbl'] = ''
 df['omb_house_number'] = ''
 df['omb_street_name'] = ''
