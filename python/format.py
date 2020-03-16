@@ -33,29 +33,26 @@ df.fillna('', inplace=True)
 df['boroct'] = list(map(lambda boro, ct: boro+ct if ct!='' else '', df.boro, df.geo_censtract))
 col_names = {'project_id': 'Project_name',
              'units':'Units',
-             'input_type_code':'Type',
+             'units_assisted_with_cd':'Units_assisted',
              'boro':'Borocode',
              'address': 'Address',
-             'geo_address':'GBAT_Address',
+             'input_type_code':'Type',
+             'tax_block':'Block', 
+             'tax_lot':'Lot',
+             'geo_house_number':'GBAT_num',
+             'geo_street_name':'GBAT_street',
+             'geo_stcode':'GBAT_streetnum',
+             'geo_block':'GBAT_block',
+             'geo_lot':'GBAT_lot',
+             'geo_bbl':'GBAT_BBL',  
              'geo_censtract':'GBAT_tract', 
              'geo_borough_code':'GBAT_boro',
              'boroct': 'GBAT_borotract',
              'geo_commboard':'GBAT_commdist', 
              'geo_council': 'GBAT_councildist',
              'geo_cong':'GBAT_congdist',
-             'tax_block':'Block', 
-             'tax_lot':'Lot',
-             'geo_block':'GBAT_block',
-             'geo_lot':'GBAT_lot', 
-             'geo_stcode':'GBAT_streetnum', 
              'geo_bin':'GBAT_BIN',
-             'program_name':'Project_name',
-             'geo_street_name':'GBAT_street',
-             'geo_house_number':'GBAT_num',
-             'hnum': 'num',
-             'sname': 'street',
-             'bbl':'BBL',
-             'geo_bbl':'GBAT_BBL'}
+             'bbl':'BBL'}
 
 df = df.rename(columns=col_names)
 df = df[list(col_names.values())]
@@ -76,18 +73,15 @@ def get_boroct(bbl):
         return result
 
 df.loc[(df['GBAT_borotract'].isna())&(~df.BBL.isna()), 'GBAT_borotract'] = df.loc[(df['GBAT_borotract'].isna())&(~df.BBL.isna()), 'BBL'].apply(get_boroct)
+df.drop(columns = ['BBL'], inplace=True)
 df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index=False)
 
 ## Adding census tract fields
 df = pd.read_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020.csv', index_col=False, dtype=str)
 eligibility = pd.read_csv(f'{Path(__file__).parent.parent}/data/CDBG_census_tract.csv', index_col=False, dtype=str)
 df = df.merge(eligibility[['BoroCT', 'Eligibility', 'TotalPop', 'LowMod_Population', 'Res_pct']], how='left', left_on='GBAT_borotract', right_on='BoroCT')
-df = df.drop(columns=['BoroCT'],  axis=1).rename(columns = {'Eligibility':'CD_Eligibility', 
-                                                            'TotalPop':'Total_Persons',
+df = df.drop(columns=['BoroCT'],  axis=1).rename(columns = {'TotalPop':'Total_Persons',
                                                             'LowMod_Population':'LowMod_Persons',
-                                                            'Res_pct':'Per_Residential'})
-
-
-
-
+                                                            'Res_pct':'Per_Residential',
+                                                            'Eligibility':'CD_Eligibility'})
 df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020_FINAL.csv', index=False)
