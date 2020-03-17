@@ -1,8 +1,9 @@
 import pandas as pd 
+import numpy as np
 import os
 import json
 from pathlib import Path
-from utils import get_hnum, get_sname, geocode_address, geocode_bbl
+from utils import get_hnum, get_sname, geocode_a, geocode_bbl
 from multiprocessing import Pool, cpu_count
 
 # # Load data
@@ -51,24 +52,39 @@ from multiprocessing import Pool, cpu_count
 # B.to_csv(f'{Path(__file__).parent.parent}/output/B.csv', index = False)
 # # project_code.to_csv(f'{Path(__file__).parent.parent}/output/project_code.csv', index = False)
 
+
 A = pd.read_csv(f'{Path(__file__).parent.parent}/output/A.csv', dtype=str)
+A['bbl'] = np.nan
 B = pd.read_csv(f'{Path(__file__).parent.parent}/output/B.csv', dtype=str)
 C = pd.read_csv(f'{Path(__file__).parent.parent}/output/corrections_input.csv', dtype=str)
 B['boro'] = B['bbl'].apply(lambda x: x[0])
 
+# Extract type-A corrections, and sort into address updates or BBL updates
 C1 = C.loc[C.input_type_code == 'A']
-C1 = C1[(C1.omb_house_number.notnull())&(C1.omb_street_name.notnull())].reset_index()
+C1_1 = C1[(C1.omb_house_number.notnull())&(C1.omb_street_name.notnull())&(C1.omb_borough.notnull())].reset_index()
+C1_2 = C1[(C1.omb_bbl.notnull())].reset_index()
+
+# Extract type-B corrections
 C2 = C.loc[C.input_type_code == 'B']
 C2 = C2[C2.omb_bbl.notnull()].reset_index()
-for i in range(C1.shape[0]):
-    A.loc[A.uid == C1.loc[i, 'uid'], 'hnum'] = C1.loc[i,'omb_house_number']
-    A.loc[A.uid == C1.loc[i, 'uid'], 'sname'] = C1.loc[i, 'omb_street_name']
 
+# Apply type-A address updates
+for i in range(C1_1.shape[0]):
+    A.loc[A.uid == C1_1.loc[i, 'uid'], 'hnum'] = C1_1.loc[i,'omb_house_number']
+    A.loc[A.uid == C1_1.loc[i, 'uid'], 'sname'] = C1_1.loc[i, 'omb_street_name']
+    A.loc[A.uid == C1_1.loc[i, 'uid'], 'boro'] = C1_1.loc[i, 'omb_borough']
+
+# Apply type-A BBL updates
+for i in range(C1_2.shape[0]):
+    A.loc[A.uid == C1_2.loc[i, 'uid'], 'bbl'] = C1_2.loc[i,'omb_bbl']
+
+# Apply type-B BBL updates
 for i in range(C2.shape[0]):
     B.loc[B.uid == C2.loc[i, 'uid'], 'bbl'] = C2.loc[i,'omb_bbl']
 
+
 with Pool(processes=cpu_count()) as pool:
-    it = pool.map(geocode_address, A.to_dict('records'))
+    it = pool.map(geocode_a, A.to_dict('records'))
 A_geo = pd.DataFrame(it)
 
 with Pool(processes=cpu_count()) as pool:
