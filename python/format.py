@@ -82,6 +82,5 @@ eligibility = pd.read_csv(f'{Path(__file__).parent.parent}/data/CDBG_census_trac
 df = df.merge(eligibility[['BoroCT', 'Eligibility', 'TotalPop', 'LowMod_Population', 'Res_pct']], how='left', left_on='GBAT_borotract', right_on='BoroCT')
 df = df.drop(columns=['BoroCT'],  axis=1).rename(columns = {'TotalPop':'Total_Persons',
                                                             'LowMod_Population':'LowMod_Persons',
-                                                            'Res_pct':'Per_Residential',
-                                                            'Eligibility':'CD_Eligibility'})
+                                                            'Res_pct':'Per_Residential'})
 df.to_csv(f'{Path(__file__).parent.parent}/output/CDBG_2020_FINAL.csv', index=False)
