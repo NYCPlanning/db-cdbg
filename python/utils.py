@@ -2,6 +2,7 @@ from geosupport import Geosupport, GeosupportError
 import usaddress
 import re
 import os
+import numpy as np
 
 g = Geosupport()
 
@@ -127,6 +128,14 @@ def geocode_bbl(inputs):
                 geo.update(inputs)
                 geo.update({'status':'failure'})
                 return geo
+
+def geocode_a(inputs):
+    bbl=inputs.get('bbl', np.nan)
+    if isinstance(bbl, str):
+        geo = geocode_bbl(inputs)
+    else:
+        geo = geocode_address(inputs)
+    return geo
 
 def parse_output(geo):
     '''
